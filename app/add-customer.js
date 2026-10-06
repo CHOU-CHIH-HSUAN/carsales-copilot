@@ -61,9 +61,10 @@ export default function AddCustomerScreen() {
   const [budget, setBudget] = useState('');
 
   function handleCreate() {
-    const note = [brand, model, budget && `預算 ${budget}`].filter(Boolean).join(' · ') || source;
-    addCustomer({ name, phone, source, temperature, brand, model, budget, note });
-    router.back(); // 回到客戶總覽，就會看到新客戶在最上面
+    const interestedCar = [brand, model].filter(Boolean).join(' ');
+    const note = [interestedCar, budget && `預算 ${budget}`].filter(Boolean).join(' · ') || source;
+    const created = addCustomer({ name, phone, source, temperature, budget, interestedCar, note });
+    router.replace(`/customer/${created.id}`); // 建立成功 → 跳到這位客戶的詳情頁
   }
 
   return (

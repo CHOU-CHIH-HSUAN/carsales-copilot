@@ -3,15 +3,18 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { useCustomers } from '../src/context/CustomerContext';
 import { colors, radius } from '../src/theme';
 
 export default function LoginScreen() {
+  const { onboarded } = useCustomers();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // 目前是假登入：按下去直接進客戶總覽。之後換成 Firebase Auth
+  // 目前是假登入。之後換成 Firebase Auth
+  // 第一次登入 → 先看新手引導；看過了 → 直接進客戶總覽
   function handleLogin() {
-    router.replace('/customers'); // replace = 不能按返回鍵回到登入頁
+    router.replace(onboarded ? '/customers' : '/onboarding'); // replace = 不能按返回鍵回到登入頁
   }
 
   return (
