@@ -26,7 +26,7 @@ export default function ConsentScreen() {
 
   function agree() {
     giveConsentAndStart(customerId, method);
-    router.back(); // 回到 VoiceRec，畫面會自動變成「錄音中」
+    router.replace('/record/live'); // 直接進全螢幕錄音
   }
 
   return (
@@ -34,7 +34,7 @@ export default function ConsentScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         <BackHeader title="錄音前客戶同意" />
 
-        <Text style={styles.customer}>客戶：{customer ? customer.name : '—'}</Text>
+        <Text style={styles.customer}>客戶：{customer ? customer.name : '新客戶'}</Text>
 
         {/* 給業務員照著唸的話術，資深業務也不用自己想怎麼開口 */}
         <View style={styles.scriptBox}>
@@ -73,8 +73,14 @@ export default function ConsentScreen() {
         </Pressable>
         {!allChecked && <Text style={styles.hint}>三項都勾選後才能開始錄音</Text>}
 
-        <Pressable style={styles.declineBtn} onPress={() => router.back()}>
-          <Text style={styles.declineText}>客戶不同意，不錄音</Text>
+        {/* 客戶不同意：新客戶 → 手動建檔；舊客戶 → 回到他的詳情頁手動記錄 */}
+        <Pressable
+          style={styles.declineBtn}
+          onPress={() =>
+            customerId === 'new' ? router.replace('/add-customer') : router.replace(`/customer/${customerId}`)
+          }
+        >
+          <Text style={styles.declineText}>客戶不同意 → 改用手動筆記</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>

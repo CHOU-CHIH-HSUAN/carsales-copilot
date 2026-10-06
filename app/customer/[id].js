@@ -11,6 +11,7 @@ import Tag from '../../src/components/Tag';
 import TodoItem from '../../src/components/TodoItem';
 import { useCustomers } from '../../src/context/CustomerContext';
 import { analysis, interactions } from '../../src/data/mockData';
+import { goRecord } from '../../src/utils/recording';
 import { colors, radius } from '../../src/theme';
 
 const tempLabel = { hot: '熱', warm: '溫', cold: '冷' };
@@ -35,7 +36,8 @@ function ActionButton({ emoji, label, onPress }) {
 
 export default function CustomerDetailScreen() {
   const { id } = useLocalSearchParams();
-  const { getCustomer, todos, toggleTodo, consents } = useCustomers();
+  const ctx = useCustomers();
+  const { getCustomer, todos, toggleTodo, consents } = ctx;
   const customer = getCustomer(id);
 
   if (!customer) {
@@ -66,7 +68,7 @@ export default function CustomerDetailScreen() {
           <ActionButton
             emoji="🎙️"
             label="開始錄音"
-            onPress={() => router.push({ pathname: '/voicerec', params: { customerId: id } })}
+            onPress={() => goRecord(ctx, id)}
           />
           <ActionButton
             emoji="🧠"

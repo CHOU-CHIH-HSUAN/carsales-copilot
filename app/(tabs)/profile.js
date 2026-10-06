@@ -5,7 +5,6 @@ import { router } from 'expo-router';
 import ScreenHeader from '../../src/components/ScreenHeader';
 import Tag from '../../src/components/Tag';
 import { useCustomers } from '../../src/context/CustomerContext';
-import { salesperson } from '../../src/data/mockData';
 import { colors, radius } from '../../src/theme';
 
 function InfoRow({ icon, label, value }) {
@@ -32,13 +31,20 @@ function SettingRow({ icon, label, detail, onPress }) {
 }
 
 export default function ProfileScreen() {
-  const { consents, vocabulary, crm } = useCustomers();
+  const { consents, vocabulary, crm, profile: salesperson } = useCustomers();
   const activeConsents = consents.filter((c) => c.status === 'active').length;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.container}>
-        <ScreenHeader title="個人資料" right={<Text style={styles.edit}>編輯</Text>} />
+        <ScreenHeader
+          title="個人資料"
+          right={
+            <Pressable onPress={() => router.push('/profile-edit')} hitSlop={10}>
+              <Text style={styles.edit}>編輯</Text>
+            </Pressable>
+          }
+        />
 
         <View style={styles.profileBox}>
           <View style={styles.avatar}>
@@ -60,11 +66,12 @@ export default function ProfileScreen() {
         <Text style={styles.sectionTitle}>上手與隱私</Text>
         <SettingRow icon="📖" label="使用教學" onPress={() => router.push({ pathname: '/onboarding', params: { replay: '1' } })} />
         <SettingRow icon="🔒" label="隱私與授權紀錄" detail={`${activeConsents} 筆`} onPress={() => router.push('/privacy')} />
+        <SettingRow icon="📄" label="服務條款與隱私權政策" onPress={() => router.push('/terms')} />
 
         <Text style={styles.sectionTitle}>AI 與系統整合</Text>
         <SettingRow icon="🗣️" label="汽車專有名詞詞庫" detail={`${vocabulary.length} 個`} onPress={() => router.push('/vocabulary')} />
         <SettingRow icon="🔗" label="CRM 串接" detail={crm.system} onPress={() => router.push('/crm')} />
-        <SettingRow icon="🔔" label="通知設定" />
+        <SettingRow icon="🔔" label="通知設定" onPress={() => router.push('/notifications')} />
 
         <Pressable style={styles.logoutBtn} onPress={() => router.replace('/')}>
           <Text style={styles.logoutText}>登出</Text>

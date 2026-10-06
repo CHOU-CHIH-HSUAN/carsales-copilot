@@ -1,16 +1,14 @@
-// ② 客戶總覽（首頁）：數據卡片、今日回訪提醒、智慧待辦、客戶列表（可搜尋、篩選、依成交機率排序）
+// 客戶分頁：只放客戶列表（搜尋、熱溫冷篩選、排序）
+// 回訪提醒和待辦已經搬到「首頁」和「待辦」分頁
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import Chip from '../../src/components/Chip';
 import ProbabilityBar from '../../src/components/ProbabilityBar';
 import ScreenHeader from '../../src/components/ScreenHeader';
-import SectionTitle from '../../src/components/SectionTitle';
 import Tag from '../../src/components/Tag';
-import TodoItem from '../../src/components/TodoItem';
 import { useCustomers } from '../../src/context/CustomerContext';
-import { followUps } from '../../src/data/mockData';
 import { colors, radius } from '../../src/theme';
 
 const tempLabel = { hot: '熱', warm: '溫', cold: '冷' };
@@ -21,15 +19,10 @@ const filters = [
   { key: 'warm', label: '溫' },
   { key: 'cold', label: '冷' },
 ];
-
-function StatCard({ number, label, color }) {
-  return (
-    <View style={styles.statCard}>
-      <Text style={[styles.statNumber, { color }]}>{number}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
-}
+const sorts = {
+  probability: { label: '成交機率 ▾', fn: (a, b) => b.closeProbability - a.closeProbability },
+  recent: { label: '最近聯絡 ▾', fn: (a, b) => a.lastContactDays - b.lastContactDays },
+};
 
 function CustomerRow({ customer }) {
   return (
@@ -53,88 +46,46 @@ function CustomerRow({ customer }) {
 }
 
 export default function CustomersScreen() {
-  const { customers, todos, toggleTodo, getCustomer } = useCustomers();
+  const { customers } = useCustomers();
+  const params = useLocalSearchParams();
   const [filter, setFilter] = useState('all');
   const [keyword, setKeyword] = useState('');
-  const [showAllTodos, setShowAllTodos] = useState(false);
+  const [sortKey, setSortKey] = useState('probability');
 
-  // 數據卡片：從資料即時計算（對應後端 getDashboard 的 stats）
-  const pendingTodos = todos.filter((t) => !t.done);
-  const highChance = customers.filter((c) => c.closeProbability >= 70).length;
-
-  // 待辦：未完成排前面
-  const sortedTodos = [...todos].sort((a, b) => a.done - b.done);
-  const visibleTodos = showAllTodos ? sortedTodos : sortedTodos.slice(0, 3);
-
-  // 客戶列表：篩選 → 搜尋 → 依成交機率由高到低
   const list = customers
     .filter((c) => filter === 'all' || c.temperature === filter)
-    .filter((c) => !keyword || c.name.includes(keyword) || (c.note || '').includes(keyword))
-    .sort((a, b) => b.closeProbability - a.closeProbability);
+    .filter(
+      (c) =>
+        !keyword ||
+        c.name.includes(keyword) ||
+        (c.note || '').includes(keyword) ||
+        (c.interestedCar || '').toLowerCase().includes(keyword.toLowerCase())
+    )
+    .sort(sorts[sortKey].fn);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.container}>
         <ScreenHeader
           title="我的客戶"
+          onBack={
+            params.from === 'home'
+              ? () => {
+                  router.setParams({ from: undefined });
+                  router.navigate('/home');
+                }
+              : undefined
+          }
           right={
-            <View style={styles.headerRight}>
-              <Text style={styles.synced}>已同步</Text>
-              <Pressable onPress={() => router.push('/add-customer')} hitSlop={10}>
-                <Text style={styles.plus}>＋</Text>
-              </Pressable>
-            </View>
+            <Pressable onPress={() => router.push('/add-customer')} hitSlop={10}>
+              <Text style={styles.plus}>＋</Text>
+            </Pressable>
           }
         />
 
-        <View style={styles.statRow}>
-          <StatCard number={customers.length} label="客戶數" color={colors.text} />
-          <StatCard number={pendingTodos.length} label="待辦事項" color={colors.orange} />
-          <StatCard number={highChance} label="高成交機率" color={colors.green} />
-        </View>
-
-        {/* 自動回訪提醒 */}
-        <SectionTitle title="🔔 回訪提醒" />
-        {followUps.map((f) => {
-          const c = getCustomer(f.customerId);
-          if (!c) return null;
-          return (
-            <Pressable
-              key={f.id}
-              style={styles.followCard}
-              onPress={() => router.push({ pathname: '/revisit', params: { id: f.customerId } })}
-            >
-              <View style={{ flex: 1 }}>
-                <Text style={styles.followTitle}>
-                  {f.when} · {c.name}
-                </Text>
-                <Text style={styles.followReason}>{f.reason}</Text>
-              </View>
-              <Text style={styles.followLink}>看話術 ›</Text>
-            </Pressable>
-          );
-        })}
-
-        {/* 智慧待辦 */}
-        <SectionTitle
-          title={`✅ 智慧待辦（${pendingTodos.length}）`}
-          actionText={showAllTodos ? '收合' : '查看全部'}
-          onAction={() => setShowAllTodos(!showAllTodos)}
-        />
-        {visibleTodos.map((t) => (
-          <TodoItem
-            key={t.id}
-            todo={t}
-            customerName={getCustomer(t.customerId)?.name}
-            onToggle={() => toggleTodo(t.id)}
-          />
-        ))}
-
-        {/* 客戶列表 */}
-        <SectionTitle title="👥 客戶列表（依成交機率排序）" />
         <TextInput
           style={styles.search}
-          placeholder="🔍 搜尋姓名或備註"
+          placeholder="🔍 搜尋姓名、車款、備註"
           placeholderTextColor={colors.placeholder}
           value={keyword}
           onChangeText={setKeyword}
@@ -143,15 +94,17 @@ export default function CustomersScreen() {
           {filters.map((f) => (
             <Chip key={f.key} label={f.label} selected={filter === f.key} onPress={() => setFilter(f.key)} />
           ))}
+          <Chip
+            label={sorts[sortKey].label}
+            onPress={() => setSortKey(sortKey === 'probability' ? 'recent' : 'probability')}
+          />
         </View>
+
+        <Text style={styles.count}>共 {list.length} 位</Text>
         {list.map((c) => (
           <CustomerRow key={c.id} customer={c} />
         ))}
         {list.length === 0 && <Text style={styles.empty}>找不到符合的客戶</Text>}
-
-        <View style={styles.syncBar}>
-          <Text style={styles.syncText}>☁ Firebase 雲端同步 · 剛才更新</Text>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -159,48 +112,25 @@ export default function CustomersScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  container: { padding: 20 },
-  headerRight: { flexDirection: 'row', alignItems: 'center' },
-  synced: { color: colors.green, fontSize: 13, marginRight: 12 },
-  plus: { fontSize: 22, color: colors.text },
-  statRow: { flexDirection: 'row' },
-  statCard: {
-    flex: 1,
-    backgroundColor: colors.card,
-    borderRadius: radius.md,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginHorizontal: 3,
-  },
-  statNumber: { fontSize: 20, fontWeight: '500' },
-  statLabel: { fontSize: 12, color: colors.subText, marginTop: 2 },
-  followCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.primaryLight,
-    borderRadius: radius.md,
-    padding: 12,
-    marginBottom: 8,
-  },
-  followTitle: { fontSize: 14, fontWeight: '600', color: colors.primary },
-  followReason: { fontSize: 12, color: colors.text, marginTop: 2 },
-  followLink: { fontSize: 13, color: colors.primary, marginLeft: 8 },
+  container: { padding: 20, paddingBottom: 32 },
+  plus: { fontSize: 24, color: colors.text },
   search: {
     backgroundColor: colors.card,
     borderRadius: radius.md,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 11,
     fontSize: 14,
     color: colors.text,
   },
-  filterRow: { flexDirection: 'row', marginTop: 10, marginBottom: 2 },
+  filterRow: { flexDirection: 'row', marginTop: 10 },
+  count: { fontSize: 12, color: colors.subText, marginTop: 12 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.card,
     borderRadius: radius.md,
     padding: 14,
-    marginTop: 10,
+    marginTop: 8,
   },
   avatar: {
     width: 40,
@@ -216,6 +146,4 @@ const styles = StyleSheet.create({
   stage: { fontSize: 11, color: colors.primary, marginLeft: 8 },
   note: { fontSize: 12, color: colors.subText, marginTop: 2 },
   empty: { color: colors.subText, textAlign: 'center', marginTop: 16 },
-  syncBar: { backgroundColor: colors.card, borderRadius: radius.sm, padding: 10, marginTop: 14 },
-  syncText: { fontSize: 12, color: colors.subText },
 });

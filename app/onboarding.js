@@ -18,12 +18,12 @@ const slides = [
     emoji: '💡',
     title: '接待前：先看「回訪軍師」',
     text: '客戶到店前打開回訪軍師，系統會提醒你上次聊了什麼、這次可以怎麼開場。',
-    tip: '首頁的「今日回訪提醒」會告訴你今天該聯絡誰',
+    tip: '打開 App 的首頁，就會告訴你今天該聯絡誰',
   },
   {
     emoji: '🎙️',
     title: '接待中：取得同意後一鍵錄音',
-    text: '按下錄音前，系統會跳出同意說明，你照著唸給客戶聽，客戶同意後才開始錄音。',
+    text: '按下方中間的 🎙️、選好客戶，系統會跳出同意說明，你照著唸給客戶聽，客戶同意後才開始錄音。',
     tip: '客戶不同意也沒關係，可以改用手動新增客戶',
   },
   {
@@ -44,7 +44,7 @@ export default function OnboardingScreen() {
   function finish() {
     setOnboarded(true);
     if (replay) router.back();
-    else router.replace('/customers');
+    else router.replace('/home');
   }
 
   return (

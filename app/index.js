@@ -14,7 +14,7 @@ export default function LoginScreen() {
   // 目前是假登入。之後換成 Firebase Auth
   // 第一次登入 → 先看新手引導；看過了 → 直接進客戶總覽
   function handleLogin() {
-    router.replace(onboarded ? '/customers' : '/onboarding'); // replace = 不能按返回鍵回到登入頁
+    router.replace(onboarded ? '/home' : '/onboarding'); // replace = 不能按返回鍵回到登入頁
   }
 
   return (
@@ -71,7 +71,25 @@ export default function LoginScreen() {
           <Text style={styles.googleText}>🔵 使用 Google 帳號登入</Text>
         </Pressable>
 
-        <Text style={styles.terms}>登入即同意服務條款與隱私政策</Text>
+        {/* 註冊入口 */}
+        <View style={styles.registerRow}>
+          <Text style={styles.registerHint}>還沒有帳號？</Text>
+          <Pressable onPress={() => router.push('/register')} hitSlop={8}>
+            <Text style={styles.registerLink}>立即註冊</Text>
+          </Pressable>
+        </View>
+
+        {/* 條款連結：Text 裡面再包 Text，就可以讓一部分文字變成可點的連結 */}
+        <Text style={styles.terms}>
+          登入即表示您同意
+          <Text style={styles.link} onPress={() => router.push({ pathname: '/terms', params: { doc: 'terms' } })}>
+            《服務條款》
+          </Text>
+          與
+          <Text style={styles.link} onPress={() => router.push({ pathname: '/terms', params: { doc: 'privacy' } })}>
+            《隱私權政策》
+          </Text>
+        </Text>
       </View>
     </SafeAreaView>
   );
@@ -121,5 +139,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   googleText: { fontSize: 15, color: colors.text },
-  terms: { textAlign: 'center', fontSize: 12, color: colors.placeholder, marginTop: 18 },
+  registerRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 18 },
+  registerHint: { fontSize: 14, color: colors.subText },
+  registerLink: { fontSize: 14, color: colors.primary, fontWeight: '600', marginLeft: 4 },
+  terms: { textAlign: 'center', fontSize: 12, color: colors.subText, marginTop: 12, lineHeight: 18 },
+  link: { color: colors.primary, textDecorationLine: 'underline' },
 });

@@ -1,18 +1,18 @@
-// ④ AI 智慧摘要
+// AI 智慧摘要（一般頁面，一定帶某位客戶的 id 進來：/summary?id=c1）
 // 三個分頁：購車需求（硬需求 Agent）／情緒價值（情緒價值 Agent）／成交分析（生命週期＋成交機率）
 // 標籤驗證機制：每個標籤顯示 AI 信心值，業務員可「確認」或「修正」，系統統計標籤正確率
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import ProbabilityBar from '../../src/components/ProbabilityBar';
-import ScreenHeader from '../../src/components/ScreenHeader';
-import SectionTitle from '../../src/components/SectionTitle';
-import StageTracker from '../../src/components/StageTracker';
-import Tag from '../../src/components/Tag';
-import { useCustomers } from '../../src/context/CustomerContext';
-import { analysis } from '../../src/data/mockData';
-import { colors, radius } from '../../src/theme';
+import ProbabilityBar from '../src/components/ProbabilityBar';
+import BackHeader from '../src/components/BackHeader';
+import SectionTitle from '../src/components/SectionTitle';
+import StageTracker from '../src/components/StageTracker';
+import Tag from '../src/components/Tag';
+import { useCustomers } from '../src/context/CustomerContext';
+import { analysis } from '../src/data/mockData';
+import { colors, radius } from '../src/theme';
 
 const LOW = 0.75; // AI 信心低於 75% 的標籤標成「待確認」
 
@@ -171,15 +171,15 @@ export default function SummaryScreen() {
   const accuracy = reviewed ? Math.round((correct / reviewed) * 100) : null;
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container}>
-        <ScreenHeader
-          title={`${customer ? customer.name : '客戶'} · ${data ? '分析完成' : '尚未分析'}`}
+        <BackHeader
+          title={`${customer ? customer.name : '新客戶'} · ${data ? '分析完成' : '尚未分析'}`}
           right={<Tag label="AI 摘要" tone="purple" />}
         />
 
         {!data ? (
-          <Text style={styles.empty}>這位客戶還沒有錄音紀錄，先到 VoiceRec 錄一段對話吧！</Text>
+          <Text style={styles.empty}>這位客戶還沒有錄音紀錄，按下方中間的 🎙️ 錄一段對話吧！</Text>
         ) : (
           <>
             <Text style={styles.meta}>
